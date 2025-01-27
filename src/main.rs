@@ -17,26 +17,56 @@ fn main() {
             ..default()
         }),
     ))
-    .add_systems(Startup, setup);
+    .init_resource::<Scene>()
+    .add_systems(Startup, setup)
+    .add_systems(Update, update_scene);
     app.run();
 }
 
 fn setup(
     mut commands: Commands,
+    mut game: ResMut<Scene>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+    ) {
     commands.spawn(Camera2d);
 
     let shape = meshes.add(Circle::new(50.0));
     let color = Color::hsl(1.0, 1.0, 1.0);
-
-    commands.spawn((
+    let circ_id = commands.spawn((
         Mesh2d(shape),
         MeshMaterial2d(materials.add(color)),
-        Transform::from_xyz(0.0, 0.0, 0.0)
+        Transform::from_xyz(0.0, 0.0, 0.0),
         ),
-    );
+    ).id();
+
+    let shape2 = meshes.add(Circle::new(10.0));
+    let color2 = Color::hsl(99.0, 99.0, 0.0);
+    let circ_id2 = commands.spawn((
+        Mesh2d(shape2),
+        MeshMaterial2d(materials.add(color2)),
+        Transform::from_xyz(100.0, 0.0, 0.0),
+        ),
+    ).id();
+    game.entities.push(circ_id);
+    game.entities.push(circ_id2);
+}
+
+#[derive(Resource, Default)]
+struct Scene {
+    entities: Vec<Entity>,
+}
+
+fn update_scene(
+    game: Res<Scene>,
+    time: Res<Time>,
+    mut transforms: Query<&mut Transform>,
+    ) {
+    for entity in &game.entities {
+        if let Ok(mut transform) = transforms.get_mut(*entity) {
+            transform.translation.x += 10.0 * time.delta_secs();
+        }
+    }
 }
 
 struct Dim2 {
@@ -51,11 +81,6 @@ impl Default for Dim2 {
             y: 0.0,
         }
     }
-}
-
-enum Entity{
-    Ball,
-    Wall,
 }
 
 struct Simulation {
