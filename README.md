@@ -2,6 +2,8 @@
 
 boing is a simple rust demonstration of a ball bouncing off walls
 
+Using bevy for the graphics so that I can focus on physics 😃
+
 Here are the features (in rough order of implementation):
 - sphere and rectangle object implementations
 - gravity between objects

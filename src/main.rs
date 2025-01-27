@@ -1,9 +1,42 @@
+use bevy::prelude::*;
+use bevy::window::{WindowResolution, WindowPlugin};
 use physical_constants;
 
+use std::f64::consts::PI;
 const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
 
 fn main() {
-    println!("Hello, world!");
+    let mut app = App::new();
+    app.add_plugins((
+        DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                resolution: WindowResolution::new(500., 500.)
+                    .with_scale_factor_override(1.0),
+                    ..default()
+            }),
+            ..default()
+        }),
+    ))
+    .add_systems(Startup, setup);
+    app.run();
+}
+
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    commands.spawn(Camera2d);
+
+    let shape = meshes.add(Circle::new(50.0));
+    let color = Color::hsl(1.0, 1.0, 1.0);
+
+    commands.spawn((
+        Mesh2d(shape),
+        MeshMaterial2d(materials.add(color)),
+        Transform::from_xyz(0.0, 0.0, 0.0)
+        ),
+    );
 }
 
 struct Dim2 {
