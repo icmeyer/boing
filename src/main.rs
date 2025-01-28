@@ -1,22 +1,25 @@
 use bevy::prelude::*;
 use bevy::window::{WindowResolution, WindowPlugin};
+use bevy::math::{Vec2, Vec3};
 use physical_constants;
 
-use std::f64::consts::PI;
-const G: f64 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION;
+use std::f32::consts::PI;
+const G: f32 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION as f32;
+const side_length: f32 = 600.;
 
 fn main() {
     let mut app = App::new();
     app.add_plugins((
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                resolution: WindowResolution::new(500., 500.)
+                resolution: WindowResolution::new(side_length, side_length)
                     .with_scale_factor_override(1.0),
                     ..default()
             }),
             ..default()
         }),
     ))
+    .insert_resource(ClearColor(Color::rgba(0.996078, 0.94902, 0.858824, 1.0)))
     .init_resource::<Scene>()
     .add_systems(Startup, setup)
     .add_systems(Update, update_scene);
@@ -31,11 +34,10 @@ fn setup(
     ) {
     commands.spawn(Camera2d);
 
-    let shape = meshes.add(Circle::new(50.0));
-    let color = Color::hsl(1.0, 1.0, 1.0);
+    let bluish = Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.);
     let circ_id = commands.spawn((
-        Mesh2d(shape),
-        MeshMaterial2d(materials.add(color)),
+        Mesh2d(meshes.add(Circle::new(side_length/10.0))),
+        MeshMaterial2d(materials.add(bluish)),
         Transform::from_xyz(0.0, 0.0, 0.0),
         ),
     ).id();
@@ -69,42 +71,27 @@ fn update_scene(
     }
 }
 
-struct Dim2 {
-    x: f64,
-    y: f64,
-}
-
-impl Default for Dim2 {
-    fn default() -> Self {
-        Dim2 {
-            x: 0.0,
-            y: 0.0,
-        }
-    }
-}
-
-struct Simulation {
-    entities: Vec<Entity>,
-    time_step: f32,
-}
-
 struct Visualization {
 }
 
+enum EntityTracker {
+    Ball,
+    Wall,
+}
 
 struct Ball {
-    position: Dim2,
-    velocity: Dim2,
-    radius: f64,
-    mass: f64,
+    position: Vec2,
+    velocity: Vec2,
+    radius: f32,
+    mass: f32,
     stationary: bool,
 }
 
 impl Default for Ball {
     fn default() -> Self {
         Ball {
-            position: Dim2::default(),
-            velocity: Dim2::default(),
+            position: Vec2::default(),
+            velocity: Vec2::default(),
             radius: 1.0,
             mass: 1.0,
             stationary: true,
@@ -112,7 +99,7 @@ impl Default for Ball {
     }
 }
 
-fn grav_force(m1: &f64, m2: &f64, p1: &Dim2, p2: &Dim2) -> Dim2 {
+fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
     // F = G*m1*m2/d^2
     let d = distance(p1, p2);
     let f_tot = (G * m1 * m2) / (d * d);
@@ -120,13 +107,13 @@ fn grav_force(m1: &f64, m2: &f64, p1: &Dim2, p2: &Dim2) -> Dim2 {
     let dy = p1.y - p2.y;
     let xcomp = f_tot * (dy/dx).atan().cos();
     let ycomp = f_tot * (dy/dx).atan().sin();
-    Dim2 {
+    Vec2 {
         x: xcomp,
         y: ycomp,
     }
 }
 
-fn distance(p1: &Dim2, p2: &Dim2) -> f64 {
+fn distance(p1: &Vec2, p2: &Vec2) -> f32 {
     ((p1.x - p2.x).powf(2.0) + (p1.y - p2.y).powf(2.0)).powf(0.5)
 }
 
@@ -137,7 +124,7 @@ mod test {
     #[test]
     fn ball() {
         let b = Ball {
-            position: Dim2 {
+            position: Vec2 {
                 x: 1.0,
                 y: 2.0,
             },
@@ -149,15 +136,15 @@ mod test {
 
     #[test]
     fn distance_test() {
-        let a = Dim2 {
+        let a = Vec2 {
             x: 0.0,
             y: 0.0,
         };
-        let b = Dim2 {
+        let b = Vec2 {
             x: 1.0,
             y: 1.0,
         };
-        assert_eq!(distance(&a, &b), (2.0_f64).powf(0.5))
+        assert_eq!(distance(&a, &b), (2.0_f32).powf(0.5))
     }
 }
 
