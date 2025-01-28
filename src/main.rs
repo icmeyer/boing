@@ -28,35 +28,35 @@ fn main() {
 
 fn setup(
     mut commands: Commands,
-    mut game: ResMut<Scene>,
+    mut scene: ResMut<Scene>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     ) {
     commands.spawn(Camera2d);
 
-    let bluish = Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.);
-    let circ_id = commands.spawn((
-        Mesh2d(meshes.add(Circle::new(side_length/10.0))),
-        MeshMaterial2d(materials.add(bluish)),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+    let mut ball = Ball {
+        position: Vec2::new(0.0, 0.0),
+        velocity: Vec2::new(50.0, 0.0),
+        radius: side_length/10.0,
+        color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
+        mass: 20.0,
+        stationary: false,
+        entity: Entity::PLACEHOLDER,
+    };
+    ball.entity = commands.spawn((
+        Mesh2d(meshes.add(Circle::new(ball.radius))),
+        MeshMaterial2d(materials.add(ball.color)),
+        Transform::from_xyz(ball.position.x,
+                            ball.position.y,
+                            0.0)
         ),
     ).id();
-
-    let shape2 = meshes.add(Circle::new(10.0));
-    let color2 = Color::hsl(99.0, 99.0, 0.0);
-    let circ_id2 = commands.spawn((
-        Mesh2d(shape2),
-        MeshMaterial2d(materials.add(color2)),
-        Transform::from_xyz(100.0, 0.0, 0.0),
-        ),
-    ).id();
-    game.entities.push(circ_id);
-    game.entities.push(circ_id2);
+    scene.entity_wraps.push(ball);
 }
 
 #[derive(Resource, Default)]
 struct Scene {
-    entities: Vec<Entity>,
+    entity_wraps: Vec<Ball>,
 }
 
 fn update_scene(
@@ -64,17 +64,14 @@ fn update_scene(
     time: Res<Time>,
     mut transforms: Query<&mut Transform>,
     ) {
-    for entity in &game.entities {
-        if let Ok(mut transform) = transforms.get_mut(*entity) {
+    for entity_wrap in &game.entity_wraps {
+        if let Ok(mut transform) = transforms.get_mut(entity_wrap.entity) {
             transform.translation.x += 10.0 * time.delta_secs();
         }
     }
 }
 
-struct Visualization {
-}
-
-enum EntityTracker {
+enum EntityWrapper {
     Ball,
     Wall,
 }
@@ -82,9 +79,11 @@ enum EntityTracker {
 struct Ball {
     position: Vec2,
     velocity: Vec2,
+    color: Color,
     radius: f32,
     mass: f32,
     stationary: bool,
+    entity: Entity,
 }
 
 impl Default for Ball {
@@ -92,9 +91,11 @@ impl Default for Ball {
         Ball {
             position: Vec2::default(),
             velocity: Vec2::default(),
+            color: Color::srgb(0.0, 0.0, 0.0),
             radius: 1.0,
             mass: 1.0,
             stationary: true,
+            entity: Entity::PLACEHOLDER,
         }
     }
 }
