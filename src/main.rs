@@ -52,11 +52,31 @@ fn setup(
         ),
     ).id();
     scene.entity_wraps.push(ball);
+
+    let mut wall = Wall {
+        position: Vec2::(side_length/2.0 - side_length/20.0, 0.0),
+        velocity: Vec2::ZERO,
+        width: side_length/10.0,
+        height: side_length,
+        color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
+        mass: 0.0,
+        stationary: true,
+        entity: Entity::PLACEHOLDER,
+    };
+    wall.entity = commands.spawn((
+        Mesh2d(meshes.add(Rectangle::new(wall.width, wall.height))),
+        MeshMaterial2d(materials.add(wall.color)),
+        Transform::from_xyz(wall.position.x,
+                            wall.position.y,
+                            0.0)
+        ),
+    ).id();
+    scene.entity_wraps.push(wall);
 }
 
 #[derive(Resource, Default)]
 struct Scene {
-    entity_wraps: Vec<Ball>,
+    entity_wraps: Vec<EntityWrapper>,
 }
 
 fn update_scene(
@@ -99,6 +119,33 @@ impl Default for Ball {
         }
     }
 }
+
+struct Wall {
+    position: Vec2,
+    velocity: Vec2,
+    color: Color,
+    width: f32,
+    height: f32,
+    mass: f32,
+    stationary: bool,
+    entity: Entity,
+}
+
+impl Default for Wall {
+    fn default() -> Self {
+        Wall {
+            position: Vec2::default(),
+            velocity: Vec2::default(),
+            color: Color::srgb(0.0, 0.0, 0.0),
+            width: 1.0,
+            height: 1.0,
+            mass: 1.0,
+            stationary: true,
+            entity: Entity::PLACEHOLDER,
+        }
+    }
+}
+
 
 fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
     // F = G*m1*m2/d^2
