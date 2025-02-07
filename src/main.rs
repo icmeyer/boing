@@ -5,7 +5,7 @@ use physical_constants;
 
 use std::f32::consts::PI;
 const G: f32 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION as f32;
-const side_length: f32 = 600.;
+const side_length: f32 = 600.0;
 
 fn main() {
     let mut app = App::new();
@@ -19,7 +19,7 @@ fn main() {
             ..default()
         }),
     ))
-    .insert_resource(ClearColor(Color::rgba(0.996078, 0.94902, 0.858824, 1.0)))
+    .insert_resource(ClearColor(Color::srgba(0.996078, 0.94902, 0.858824, 1.0)))
     .init_resource::<Scene>()
     .add_systems(Startup, setup)
     .add_systems(Update, update_scene);
@@ -36,7 +36,7 @@ fn setup(
 
     let mut ball = Ball {
         position: Vec2::new(0.0, 0.0),
-        velocity: Vec2::new(50.0, 0.0),
+        velocity: Vec2::new(10.0, 2.0),
         radius: side_length/10.0,
         color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
         mass: 20.0,
@@ -51,10 +51,10 @@ fn setup(
                             0.0)
         ),
     ).id();
-    scene.entity_wraps.push(ball);
+    scene.entities.push(Box::new(ball));
 
     let mut wall = Wall {
-        position: Vec2::(side_length/2.0 - side_length/20.0, 0.0),
+        position: Vec2::new(side_length/2.0 - side_length/20.0, 0.0),
         velocity: Vec2::ZERO,
         width: side_length/10.0,
         height: side_length,
@@ -71,12 +71,12 @@ fn setup(
                             0.0)
         ),
     ).id();
-    scene.entity_wraps.push(wall);
+    scene.entities.push(Box::new(wall));
 }
 
 #[derive(Resource, Default)]
 struct Scene {
-    entity_wraps: Vec<EntityWrapper>,
+    entities: Vec<Box<dyn PhysicsEntity + Sync + Send>>,
 }
 
 fn update_scene(
@@ -84,16 +84,23 @@ fn update_scene(
     time: Res<Time>,
     mut transforms: Query<&mut Transform>,
     ) {
-    for entity_wrap in &game.entity_wraps {
-        if let Ok(mut transform) = transforms.get_mut(entity_wrap.entity) {
-            transform.translation.x += 10.0 * time.delta_secs();
+    for phys_entity in &game.entities {
+        if let Ok(mut transform) = transforms.get_mut(phys_entity.entity()) {
+            let delta_pos = phys_entity.velocity() * time.delta_secs();
+            transform.translation.x += delta_pos.x;
+            transform.translation.y += delta_pos.y;
         }
     }
 }
 
-enum EntityWrapper {
-    Ball,
-    Wall,
+trait PhysicsEntity {
+    fn position(&self) -> Vec2;
+    fn velocity(&self) -> Vec2;
+    fn set_position(&mut self, pos: Vec2);
+    fn set_velocity(&mut self, vel: Vec2);
+    fn mass(&self) -> f32;
+    fn is_stationary(&self) -> bool;
+    fn entity(&self) -> Entity;
 }
 
 struct Ball {
@@ -120,6 +127,17 @@ impl Default for Ball {
     }
 }
 
+impl PhysicsEntity for Ball {
+    fn position(&self) -> Vec2 { self.position }
+    fn velocity(&self) -> Vec2 { self.velocity }
+    fn set_position(&mut self, pos: Vec2) { self.position = pos; }
+    fn set_velocity(&mut self, vel: Vec2) { self.velocity = vel; }
+    fn mass(&self) -> f32 { self.mass }
+    fn is_stationary(&self) -> bool { self.stationary }
+    fn entity(&self) -> Entity { self.entity }
+}
+
+
 struct Wall {
     position: Vec2,
     velocity: Vec2,
@@ -144,6 +162,16 @@ impl Default for Wall {
             entity: Entity::PLACEHOLDER,
         }
     }
+}
+
+impl PhysicsEntity for Wall {
+    fn position(&self) -> Vec2 { self.position }
+    fn velocity(&self) -> Vec2 { self.velocity }
+    fn set_position(&mut self, pos: Vec2) { self.position = pos; }
+    fn set_velocity(&mut self, vel: Vec2) { self.velocity = vel; }
+    fn mass(&self) -> f32 { self.mass }
+    fn is_stationary(&self) -> bool { self.stationary }
+    fn entity(&self) -> Entity { self.entity }
 }
 
 
