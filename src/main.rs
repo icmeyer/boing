@@ -4,15 +4,16 @@ use bevy::math::{Vec2, Vec3};
 use physical_constants;
 
 use std::f32::consts::PI;
+const TWOPI: f32 = 2.0 * PI;
 const G: f32 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION as f32;
-const side_length: f32 = 600.0;
+const SIDE_LENGTH: f32 = 600.0;
 
 fn main() {
     let mut app = App::new();
     app.add_plugins((
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                resolution: WindowResolution::new(side_length, side_length)
+                resolution: WindowResolution::new(SIDE_LENGTH, SIDE_LENGTH)
                     .with_scale_factor_override(1.0),
                     ..default()
             }),
@@ -37,7 +38,7 @@ fn setup(
     let mut ball = Ball {
         position: Vec2::new(0.0, 0.0),
         velocity: Vec2::new(10.0, 2.0),
-        radius: side_length/10.0,
+        radius: SIDE_LENGTH/10.0,
         color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
         mass: 20.0,
         stationary: false,
@@ -54,10 +55,10 @@ fn setup(
     scene.entities.push(Box::new(ball));
 
     let mut wall = Wall {
-        position: Vec2::new(side_length/2.0 - side_length/20.0, 0.0),
+        position: Vec2::new(SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0, 0.0),
         velocity: Vec2::ZERO,
-        width: side_length/10.0,
-        height: side_length,
+        width: SIDE_LENGTH/10.0,
+        height: SIDE_LENGTH,
         color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
         mass: 0.0,
         stationary: true,
@@ -101,6 +102,7 @@ trait PhysicsEntity {
     fn mass(&self) -> f32;
     fn is_stationary(&self) -> bool;
     fn entity(&self) -> Entity;
+    // Vertices are given relative to the center of the object
 }
 
 struct Ball {
@@ -111,6 +113,19 @@ struct Ball {
     mass: f32,
     stationary: bool,
     entity: Entity,
+}
+
+fn make_circle_vertices(n: usize, r: f32) -> Vec<Vec2> {
+    let increment = Vec::from_iter(0..(n+1));
+    let mut vec = increment.split_last().unwrap().1;
+    let mut out = vec![Vec2::ZERO; n];
+    let mut frac = 0.0;
+    for (i, val) in vec.iter().enumerate() {
+        frac = (*val as f32)/(n as f32) * TWOPI;
+        out[i] = Vec2::new(r*(frac).cos(),
+                           r*(frac).sin());
+    }
+    out
 }
 
 impl Default for Ball {
@@ -222,5 +237,16 @@ mod test {
         };
         assert_eq!(distance(&a, &b), (2.0_f32).powf(0.5))
     }
+
+    #[test]
+    fn circle_vertices_test() {
+        let n = 8;
+        let circle_verts = make_circle_vertices(n, 1.0);
+        for vert in circle_verts.iter() {
+            println!{"Circle vert: {}", vert};
+        }
+        assert_eq!(circle_verts.len(), n);
+    }
+
 }
 
