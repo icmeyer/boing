@@ -116,16 +116,10 @@ struct Ball {
 }
 
 fn make_circle_vertices(n: usize, r: f32) -> Vec<Vec2> {
-    let increment = Vec::from_iter(0..(n+1));
-    let mut vec = increment.split_last().unwrap().1;
-    let mut out = vec![Vec2::ZERO; n];
-    let mut frac = 0.0;
-    for (i, val) in vec.iter().enumerate() {
-        frac = (*val as f32)/(n as f32) * TWOPI;
-        out[i] = Vec2::new(r*(frac).cos(),
-                           r*(frac).sin());
-    }
-    out
+    (0..n).map(|i| {
+            let frac = (i as f32) / (n as f32) * TWOPI;
+            Vec2::new(r * frac.cos(), r * frac.sin())
+    }).collect()
 }
 
 impl Default for Ball {
