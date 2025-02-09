@@ -35,15 +35,9 @@ fn setup(
     ) {
     commands.spawn(Camera2d);
 
-    let mut ball = Ball {
-        position: Vec2::new(0.0, 0.0),
-        velocity: Vec2::new(10.0, 2.0),
-        radius: SIDE_LENGTH/10.0,
-        color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
-        mass: 20.0,
-        stationary: false,
-        entity: Entity::PLACEHOLDER,
-    };
+    let mut ball = Ball::new(Vec2::new(0.0, 0.0),
+                             SIDE_LENGTH/10.0,
+                             Vec2::new(10.0, 2.0));
     ball.entity = commands.spawn((
         Mesh2d(meshes.add(Circle::new(ball.radius))),
         MeshMaterial2d(materials.add(ball.color)),
@@ -54,16 +48,10 @@ fn setup(
     ).id();
     scene.entities.push(Box::new(ball));
 
-    let mut wall = Wall {
-        position: Vec2::new(SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0, 0.0),
-        velocity: Vec2::ZERO,
-        width: SIDE_LENGTH/10.0,
-        height: SIDE_LENGTH,
-        color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
-        mass: 0.0,
-        stationary: true,
-        entity: Entity::PLACEHOLDER,
-    };
+    let mut wall = RectangleEntity::new(Vec2::new(SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0,                                            0.0),
+                                  SIDE_LENGTH/10.0,
+                                  SIDE_LENGTH,
+                                  Vec2::ZERO);
     wall.entity = commands.spawn((
         Mesh2d(meshes.add(Rectangle::new(wall.width, wall.height))),
         MeshMaterial2d(materials.add(wall.color)),
@@ -101,38 +89,48 @@ trait PhysicsEntity {
     fn set_velocity(&mut self, vel: Vec2);
     fn mass(&self) -> f32;
     fn is_stationary(&self) -> bool;
+    fn vertices(&self) -> &Vec<Vec2>;
     fn entity(&self) -> Entity;
-    // Vertices are given relative to the center of the object
 }
 
 struct Ball {
     position: Vec2,
-    velocity: Vec2,
-    color: Color,
     radius: f32,
-    mass: f32,
+    vertices: Vec<Vec2>,
+    velocity: Vec2,
     stationary: bool,
+    mass: f32,
+    color: Color,
     entity: Entity,
 }
 
-fn make_circle_vertices(n: usize, r: f32) -> Vec<Vec2> {
-    (0..n).map(|i| {
-            let frac = (i as f32) / (n as f32) * TWOPI;
-            Vec2::new(r * frac.cos(), r * frac.sin())
-    }).collect()
+impl Ball {
+    fn new(position: Vec2, radius: f32, velocity: Vec2) -> Self {
+        let mut ball = Ball {
+            position,
+            radius,
+            vertices: Vec::<Vec2>::new(),
+            velocity,
+            stationary: false,
+            mass: 1.0,
+            color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
+            entity: Entity::PLACEHOLDER,
+        };
+        ball.set_vertices(8);
+        ball
+    }
+
+    fn set_vertices(&mut self, n: usize) {
+        self.vertices = (0..n).map(|i| {
+                let frac = (i as f32) / (n as f32) * TWOPI;
+                Vec2::new(self.radius * frac.cos(), self.radius * frac.sin())
+        }).collect();
+    }
 }
 
 impl Default for Ball {
     fn default() -> Self {
-        Ball {
-            position: Vec2::default(),
-            velocity: Vec2::default(),
-            color: Color::srgb(0.0, 0.0, 0.0),
-            radius: 1.0,
-            mass: 1.0,
-            stationary: true,
-            entity: Entity::PLACEHOLDER,
-        }
+        Ball::new(Vec2::ZERO, 1.0, Vec2::ZERO)
     }
 }
 
@@ -143,46 +141,67 @@ impl PhysicsEntity for Ball {
     fn set_velocity(&mut self, vel: Vec2) { self.velocity = vel; }
     fn mass(&self) -> f32 { self.mass }
     fn is_stationary(&self) -> bool { self.stationary }
+    fn vertices(&self) -> &Vec<Vec2> { &self.vertices }
     fn entity(&self) -> Entity { self.entity }
 }
 
-
-struct Wall {
+struct RectangleEntity {
     position: Vec2,
-    velocity: Vec2,
-    color: Color,
     width: f32,
     height: f32,
-    mass: f32,
+    vertices: Vec::<Vec2>,
+    velocity: Vec2,
     stationary: bool,
+    mass: f32,
+    color: Color,
     entity: Entity,
 }
 
-impl Default for Wall {
-    fn default() -> Self {
-        Wall {
-            position: Vec2::default(),
-            velocity: Vec2::default(),
-            color: Color::srgb(0.0, 0.0, 0.0),
-            width: 1.0,
-            height: 1.0,
+impl RectangleEntity {
+    fn new(position: Vec2, width: f32, height: f32, velocity: Vec2) -> Self {
+        let mut rec = RectangleEntity {
+            position,
+            width,
+            height,
+            velocity,
+            vertices: Vec::<Vec2>::new(),
+            stationary: false,
             mass: 1.0,
-            stationary: true,
+            color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
             entity: Entity::PLACEHOLDER,
-        }
+        };
+        rec.set_vertices();
+        rec
+    }
+
+    fn set_vertices(&mut self) {
+        self.vertices.push(Vec2::new(self.position.x + self.width/2.0, 
+                                     self.position.y + self.height/2.0));
+        self.vertices.push(Vec2::new(self.position.x - self.width/2.0, 
+                                     self.position.y + self.height/2.0));
+        self.vertices.push(Vec2::new(self.position.x - self.width/2.0, 
+                                     self.position.y - self.height/2.0));
+        self.vertices.push(Vec2::new(self.position.x + self.width/2.0, 
+                                     self.position.y - self.height/2.0));
     }
 }
 
-impl PhysicsEntity for Wall {
+impl Default for RectangleEntity {
+    fn default() -> Self {
+        RectangleEntity::new(Vec2::ZERO, 1.0, 2.0, Vec2::ZERO)
+    }
+}
+
+impl PhysicsEntity for RectangleEntity {
     fn position(&self) -> Vec2 { self.position }
     fn velocity(&self) -> Vec2 { self.velocity }
     fn set_position(&mut self, pos: Vec2) { self.position = pos; }
     fn set_velocity(&mut self, vel: Vec2) { self.velocity = vel; }
     fn mass(&self) -> f32 { self.mass }
     fn is_stationary(&self) -> bool { self.stationary }
+    fn vertices(&self) -> &Vec<Vec2> { &self.vertices }
     fn entity(&self) -> Entity { self.entity }
 }
-
 
 fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
     // F = G*m1*m2/d^2
