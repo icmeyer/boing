@@ -90,13 +90,32 @@ trait PhysicsEntity {
     fn mass(&self) -> f32;
     fn is_stationary(&self) -> bool;
     fn vertices(&self) -> &Vec<Vec2>;
+    fn get_axes(&self) -> &Vec<Vec2>;
     fn entity(&self) -> Entity;
+    fn make_axes(&self) -> Vec<Vec2> {
+        let mut axes = Vec::<Vec2>::new();
+        let verts = self.vertices();
+        for i in 0..verts.len() {
+            let j = (i + 1) % verts.len();
+            let edge = Vec2 {
+                x: verts[j].x - verts[i].x,
+                y: verts[j].y - verts[i].y,
+            };
+            let normal = Vec2 {
+                x: -edge.y,
+                y: edge.x,
+            };
+            axes.push(normal);
+        }
+        axes
+    }
 }
 
 struct Ball {
     position: Vec2,
     radius: f32,
     vertices: Vec<Vec2>,
+    axes: Vec<Vec2>,
     velocity: Vec2,
     stationary: bool,
     mass: f32,
@@ -110,6 +129,7 @@ impl Ball {
             position,
             radius,
             vertices: Vec::<Vec2>::new(),
+            axes: Vec::<Vec2>::new(),
             velocity,
             stationary: false,
             mass: 1.0,
@@ -117,6 +137,7 @@ impl Ball {
             entity: Entity::PLACEHOLDER,
         };
         ball.set_vertices(8);
+        ball.axes = ball.make_axes();
         ball
     }
 
@@ -142,6 +163,7 @@ impl PhysicsEntity for Ball {
     fn mass(&self) -> f32 { self.mass }
     fn is_stationary(&self) -> bool { self.stationary }
     fn vertices(&self) -> &Vec<Vec2> { &self.vertices }
+    fn get_axes(&self) -> &Vec<Vec2> { &self.axes }
     fn entity(&self) -> Entity { self.entity }
 }
 
@@ -150,6 +172,7 @@ struct RectangleEntity {
     width: f32,
     height: f32,
     vertices: Vec::<Vec2>,
+    axes: Vec<Vec2>,
     velocity: Vec2,
     stationary: bool,
     mass: f32,
@@ -165,12 +188,14 @@ impl RectangleEntity {
             height,
             velocity,
             vertices: Vec::<Vec2>::new(),
+            axes: Vec::<Vec2>::new(),
             stationary: false,
             mass: 1.0,
             color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
             entity: Entity::PLACEHOLDER,
         };
         rec.set_vertices();
+        rec.axes = rec.make_axes();
         rec
     }
 
@@ -200,6 +225,7 @@ impl PhysicsEntity for RectangleEntity {
     fn mass(&self) -> f32 { self.mass }
     fn is_stationary(&self) -> bool { self.stationary }
     fn vertices(&self) -> &Vec<Vec2> { &self.vertices }
+    fn get_axes(&self) -> &Vec<Vec2> { &self.axes }
     fn entity(&self) -> Entity { self.entity }
 }
 
