@@ -23,7 +23,8 @@ fn main() {
     .insert_resource(ClearColor(Color::srgba(0.996078, 0.94902, 0.858824, 1.0)))
     .init_resource::<Scene>()
     .add_systems(Startup, setup)
-    .add_systems(Update, update_scene);
+    .add_systems(Update, update_scene)
+    .add_systems(FixedUpdate, kinetic_physics);
     app.run();
 }
 
@@ -72,7 +73,15 @@ fn update_scene(
     game: Res<Scene>,
     time: Res<Time>,
     mut transforms: Query<&mut Transform>,
-    ) {
+) {
+    // Do nothing for now
+}
+
+fn kinetic_physics(
+    game: Res<Scene>,
+    time: Res<Time>,
+    mut transforms: Query<&mut Transform>,
+) {
     for phys_entity in &game.entities {
         if let Ok(mut transform) = transforms.get_mut(phys_entity.entity()) {
             let delta_pos = phys_entity.velocity() * time.delta_secs();
@@ -81,6 +90,8 @@ fn update_scene(
         }
     }
 }
+
+
 
 trait PhysicsEntity {
     fn position(&self) -> Vec2;
