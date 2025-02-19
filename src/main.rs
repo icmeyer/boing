@@ -82,6 +82,20 @@ fn kinetic_physics(
     time: Res<Time>,
     mut transforms: Query<&mut Transform>,
 ) {
+    // Check for collisions
+    for phys_entity1 in &game.entities {
+        for phys_entity2 in &game.entities {
+            if phys_entity1.entity() == phys_entity2.entity() {
+                continue;
+            }
+            if let Some(min_transl_vec) = phys_entity1.test_collision(phys_entity2) {
+                if !phys_entity1.is_stationary() {
+                    phys_entity1.velocity *= min_transl_vec;
+                }
+            }
+        }
+    }
+
     for phys_entity in &game.entities {
         if let Ok(mut transform) = transforms.get_mut(phys_entity.entity()) {
             let delta_pos = phys_entity.velocity() * time.delta_secs();
@@ -112,13 +126,57 @@ trait PhysicsEntity {
                 x: verts[j].x - verts[i].x,
                 y: verts[j].y - verts[i].y,
             };
+            let mag = (edge.x.powf(2.0) + edge.y.powf(2.0)).powf(0.5);
             let normal = Vec2 {
-                x: -edge.y,
-                y: edge.x,
+                x: -edge.y / mag,
+                y: edge.x / mag,
             };
-            axes.push(normal);
         }
         axes
+    }
+    fn project(&self, axis: &Vec2) -> (f32, f32) {
+        let min = -f32::INFINITY;
+        let max = f32::INFINITY;
+        for i in 0..self.verts.len() {
+            let proj = self.verts.i.x * axis.x + self.verts.i.y * axis.y;
+            if proj < min { min = proj; }
+            if proj > max { max = proj; }
+        }
+        (min, max)
+    }
+    fn test_collision(&self, second_entity: impl PhysicsEntity) -> Option<Vec2> {
+        let axes1 = self.get_axes();
+        let axes2 = second_entity.get_axes();
+        let overlap = f32::INFINITY;
+        for axis in axes1.iter() {
+            let (min1, max1) = self.project(axis);
+            let (min2, max2) = second_entity.project(axis);
+            if max1 < min2 || max2 < min1 {
+                return None;
+            }
+            else {
+                let o = (max1 - min2);
+                if o < overlap {
+                    overlap = o;
+                    let min_transl_vec = -axis;
+                }
+            }
+        }
+        for axis in axes2.iter() {
+            let (min1, max1) = self.project(axis);
+            let (min2, max2) = second_entity.project(axis);
+            if max1 < min2 || max2 < min1 {
+                return None;
+            }
+            else {
+                let o = (max1 - min2);
+                if o < overlap {
+                    overlap = o;
+                    let min_transl_vec = axis;
+                }
+            }
+        }
+        Some(min_transl_vec)
     }
 }
 
