@@ -1,12 +1,11 @@
+mod physics;
+
+use physics::entities::{BallEntity, RectangleEntity, PhysicsEntity};
+use physics::constants::{G, SIDE_LENGTH};
+
 use bevy::prelude::*;
 use bevy::window::{WindowResolution, WindowPlugin};
-use bevy::math::{Vec2, Vec3};
-use physical_constants;
-
-use std::f32::consts::PI;
-const TWOPI: f32 = 2.0 * PI;
-const G: f32 = physical_constants::NEWTONIAN_CONSTANT_OF_GRAVITATION as f32;
-const SIDE_LENGTH: f32 = 600.0;
+use bevy::math::Vec2;
 
 fn main() {
     let mut app = App::new();
@@ -117,8 +116,8 @@ struct Scene {
 }
 
 fn update_scene(
-    game: Res<Scene>,
-    time: Res<Time>,
+    _game: Res<Scene>,
+    _time: Res<Time>,
 ) {
     // Do nothing for now
 }
@@ -156,215 +155,7 @@ fn kinetic_physics(
     }
 }
 
-struct PhysicsData {
-    position: Vec2,
-    velocity: Vec2,
-    vertices: Vec<Vec2>,
-    axes: Vec<Vec2>,
-    stationary: bool,
-    mass: f32,
-}
 
-impl PhysicsData {
-    fn new(position: Vec2, velocity: Vec2) -> Self {
-        PhysicsData {
-            position,
-            velocity,
-            vertices: Vec::new(),
-            axes: Vec::new(),
-            stationary: false,
-            mass: 1.0,
-        }
-    }
-
-    fn set_axes(&mut self) {
-        let verts = &self.vertices;
-        for i in 0..verts.len() {
-            let j = (i + 1) % verts.len();
-            let edge = Vec2 {
-                x: verts[j].x - verts[i].x,
-                y: verts[j].y - verts[i].y,
-            };
-            let mag = (edge.x.powf(2.0) + edge.y.powf(2.0)).powf(0.5);
-            let normal = Vec2 {
-                x: -edge.y / mag,
-                y: edge.x / mag,
-            };
-            self.axes.push(normal);
-        }
-    }
-
-}
-
-struct BevyData {
-    color: Color,
-    entity: Entity,
-}
-
-impl BevyData {
-    fn new() -> Self {
-        BevyData {
-            color: Color::srgba(30./255.0, 61./255.0, 111./255.0, 1.),
-            entity: Entity::PLACEHOLDER,
-        }
-    }
-}
-
-struct BallEntity {
-    physics: PhysicsData,
-    bevy: BevyData,
-    radius: f32,
-}
-
-struct RectangleEntity {
-    physics: PhysicsData,
-    bevy: BevyData,
-    width: f32,
-    height: f32,
-}
-
-
-enum PhysicsEntity {
-    Ball(BallEntity),
-    Rectangle(RectangleEntity),
-}
-
-impl PhysicsEntity {
-    fn physics(&self) -> &PhysicsData {
-        match self {
-            Self::Ball(ball) => &ball.physics,
-            Self::Rectangle(rect) => &rect.physics,
-        }
-    }
-
-    fn physics_mut(&mut self) -> &mut PhysicsData {
-        match self {
-            Self::Ball(ball) => &mut ball.physics,
-            Self::Rectangle(rect) => &mut rect.physics,
-        }
-    }
-
-    fn position(&self) -> Vec2 { self.physics().position }
-    fn velocity(&self) -> Vec2 { self.physics().velocity }
-    fn set_position(&mut self, pos: Vec2) { self.physics_mut().position = pos; }
-    fn set_velocity(&mut self, vel: Vec2) { self.physics_mut().velocity = vel; }
-    fn mass(&self) -> f32 { self.physics().mass }
-    fn is_stationary(&self) -> bool { self.physics().stationary }
-    fn vertices(&self) -> &Vec<Vec2> { &self.physics().vertices }
-    fn get_axes(&self) -> &Vec<Vec2> { &self.physics().axes }
-    fn entity(&self) -> Entity {
-        match self {
-            Self::Ball(ball) => ball.bevy.entity,
-            Self::Rectangle(rect) => rect.bevy.entity,
-        }
-    }
-
-    fn translated_verts(&self) -> Vec<Vec2> {
-        self.vertices().iter().map(|v| {
-            Vec2 {
-                x: v.x + self.position().x,
-                y: v.y + self.position().y,
-            }
-        }).collect()
-    }
-
-    fn test_collision(&self, other: &PhysicsEntity) -> Option<Vec2> {
-        let axes1 = self.get_axes();
-        let axes2 = other.get_axes();
-        let verts1 = self.translated_verts();
-        let verts2 = other.translated_verts();
-
-        let mut overlap = f32::INFINITY;
-        let mut min_transl_vec = Vec2::ZERO;
-        for axis in axes1.iter() {
-            let (min1, max1) = project(&verts1, axis);
-            let (min2, max2) = project(&verts2, axis);
-            if max1 < min2 || max2 < min1 {
-                return None;
-            }
-            else {
-                let o = max1 - min2;
-                if o < overlap {
-                    overlap = o;
-                    min_transl_vec = -(*axis);
-                }
-            }
-        }
-        for axis in axes2.iter() {
-            let (min1, max1) = project(&verts1, axis);
-            let (min2, max2) = project(&verts2, axis);
-            if max1 < min2 || max2 < min1 {
-                return None;
-            }
-            else {
-                let o = max1 - min2;
-                if o < overlap {
-                    overlap = o;
-                    min_transl_vec = *axis;
-                }
-            }
-        }
-        Some(min_transl_vec)
-    }
-}
-
-fn project(verts: &Vec<Vec2>, axis: &Vec2) -> (f32, f32) {
-    let mut min = f32::INFINITY;
-    let mut max = -f32::INFINITY;
-    for i in 0..verts.len() {
-        let proj = axis.dot(verts[i]);
-        if proj < min { min = proj; }
-        if proj > max { max = proj; }
-    }
-    (min, max)
-}
-
-
-
-
-impl BallEntity {
-    fn new(position: Vec2, velocity: Vec2, radius: f32) -> Self {
-        let mut ball = BallEntity {
-            physics: PhysicsData::new(position, velocity),
-            bevy: BevyData::new(),
-            radius,
-        };
-
-        ball.set_vertices(16);
-        ball.physics.set_axes();
-        ball
-    }
-
-    fn set_vertices(&mut self, n: i64) { 
-        self.physics.vertices = (0..n).map(|i| {
-                let frac = (i as f32) / (n as f32) * TWOPI;
-                Vec2::new(self.radius * frac.cos(), self.radius * frac.sin())
-        }).collect();
-    }
-}
-
-impl RectangleEntity {
-    fn new(position: Vec2, velocity: Vec2, width: f32, height: f32,) -> Self {
-        let mut rect = RectangleEntity {
-            physics: PhysicsData::new(position, velocity),
-            bevy: BevyData::new(),
-            width,
-            height,
-        };
-        rect.set_vertices();
-        rect.physics.set_axes();
-        rect
-    }
-
-    fn set_vertices(&mut self) {
-        let verts = &mut self.physics.vertices;
-        let pos = &self.physics.position;
-        verts.push(Vec2::new(self.width/2.0, self.height/2.0));
-        verts.push(Vec2::new(-self.width/2.0, self.height/2.0));
-        verts.push(Vec2::new(-self.width/2.0, -self.height/2.0));
-        verts.push(Vec2::new(self.width/2.0, -self.height/2.0));
-    }
-}
 
 fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
     // F = G*m1*m2/d^2
@@ -460,4 +251,3 @@ mod test {
         assert!(circ.test_collision(&rect2).is_some());
     }
 }
-
