@@ -1,6 +1,6 @@
 use bevy::math::Vec2;
 use bevy::prelude::{Entity, Color};
-use crate::physics::constants::{TWOPI};
+use super::constants::{TWOPI};
 
 pub struct PhysicsData {
     pub position: Vec2,
@@ -99,56 +99,6 @@ impl PhysicsEntity {
             }
         }).collect()
     }
-
-    pub fn test_collision(&self, other: &PhysicsEntity) -> Option<Vec2> {
-        let axes1 = self.get_axes();
-        let axes2 = other.get_axes();
-        let verts1 = self.translated_verts();
-        let verts2 = other.translated_verts();
-
-        let mut overlap = f32::INFINITY;
-        let mut min_transl_vec = Vec2::ZERO;
-        for axis in axes1.iter() {
-            let (min1, max1) = project(&verts1, axis);
-            let (min2, max2) = project(&verts2, axis);
-            if max1 < min2 || max2 < min1 {
-                return None;
-            }
-            else {
-                let o = max1 - min2;
-                if o < overlap {
-                    overlap = o;
-                    min_transl_vec = -(*axis);
-                }
-            }
-        }
-        for axis in axes2.iter() {
-            let (min1, max1) = project(&verts1, axis);
-            let (min2, max2) = project(&verts2, axis);
-            if max1 < min2 || max2 < min1 {
-                return None;
-            }
-            else {
-                let o = max1 - min2;
-                if o < overlap {
-                    overlap = o;
-                    min_transl_vec = *axis;
-                }
-            }
-        }
-        Some(min_transl_vec)
-    }
-}
-
-fn project(verts: &Vec<Vec2>, axis: &Vec2) -> (f32, f32) {
-    let mut min = f32::INFINITY;
-    let mut max = -f32::INFINITY;
-    for i in 0..verts.len() {
-        let proj = axis.dot(verts[i]);
-        if proj < min { min = proj; }
-        if proj > max { max = proj; }
-    }
-    (min, max)
 }
 
 impl BallEntity {

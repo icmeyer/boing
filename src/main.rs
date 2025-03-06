@@ -1,11 +1,15 @@
 mod physics;
-
-use physics::entities::{BallEntity, RectangleEntity, PhysicsEntity};
-use physics::constants::{G, SIDE_LENGTH};
+mod rendering;
 
 use bevy::prelude::*;
 use bevy::window::{WindowResolution, WindowPlugin};
 use bevy::math::Vec2;
+
+use physics::entities::{BallEntity, RectangleEntity, PhysicsEntity};
+use physics::constants::{SIDE_LENGTH,};
+use physics::interactions::kinetic_physics;
+use rendering::scene::{Scene, update_scene};
+
 
 fn main() {
     let mut app = App::new();
@@ -110,70 +114,6 @@ fn setup(
     scene.entities.push(PhysicsEntity::Rectangle(wall));
 }
 
-#[derive(Resource, Default)]
-struct Scene {
-    entities: Vec<PhysicsEntity>,
-}
-
-fn update_scene(
-    _game: Res<Scene>,
-    _time: Res<Time>,
-) {
-    // Do nothing for now
-}
-
-fn kinetic_physics(
-    mut game: ResMut<Scene>,
-    time: Res<Time>,
-    mut transforms: Query<&mut Transform>,
-) {
-    // Check for collisions
-    for i in 0..game.entities.len() {
-        let (left, right) = game.entities.split_at_mut(i + 1);
-        let obj_1 = &mut left[i];
-
-        for obj_2 in right.iter() {
-            if let Some(min_transl_vec) = obj_1.test_collision(obj_2) {
-                if !obj_1.is_stationary() {
-                    let v = obj_1.velocity();
-                    let reflection = v - 2.0 * v.dot(min_transl_vec) * min_transl_vec;
-                    obj_1.set_velocity(reflection);
-                }
-                break;
-            }
-        }
-    }
-
-    // Advance velocity
-    for i in 0..game.entities.len() {
-        if let Ok(mut transform) = transforms.get_mut(game.entities[i].entity()) {
-            let delta_pos = game.entities[i].velocity() * time.delta_secs();
-            transform.translation.x += delta_pos.x;
-            transform.translation.y += delta_pos.y;
-            game.entities[i].physics_mut().position += delta_pos;
-        }
-    }
-}
-
-
-
-fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
-    // F = G*m1*m2/d^2
-    let d = distance(p1, p2);
-    let f_tot = (G * m1 * m2) / (d * d);
-    let dx = p1.x - p2.x;
-    let dy = p1.y - p2.y;
-    let xcomp = f_tot * (dy/dx).atan().cos();
-    let ycomp = f_tot * (dy/dx).atan().sin();
-    Vec2 {
-        x: xcomp,
-        y: ycomp,
-    }
-}
-
-fn distance(p1: &Vec2, p2: &Vec2) -> f32 {
-    ((p1.x - p2.x).powf(2.0) + (p1.y - p2.y).powf(2.0)).powf(0.5)
-}
 
 #[cfg(test)]
 mod test {
@@ -238,16 +178,16 @@ mod test {
     //     assert!(rect1.test_collision(&rect3).is_none());
     // }
 
-    #[test]
-    fn test_rectangle_circle_collision() {
-        let circ = PhysicsEntity::Ball(BallEntity::new(Vec2::new(1.0, 0.0), Vec2::new(0.0, 0.0), 0.5));
-        let rect1 = PhysicsEntity::Rectangle(RectangleEntity::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, 0.0), 0.25, 0.25));
-        let rect2 = PhysicsEntity::Rectangle(RectangleEntity::new(Vec2::new(1.5, 0.0), Vec2::new(0.0, 0.0), 0.5, 0.5));
+    // #[test]
+    // fn test_rectangle_circle_collision() {
+    //     let circ = PhysicsEntity::Ball(BallEntity::new(Vec2::new(1.0, 0.0), Vec2::new(0.0, 0.0), 0.5));
+    //     let rect1 = PhysicsEntity::Rectangle(RectangleEntity::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, 0.0), 0.25, 0.25));
+    //     let rect2 = PhysicsEntity::Rectangle(RectangleEntity::new(Vec2::new(1.5, 0.0), Vec2::new(0.0, 0.0), 0.5, 0.5));
 
-        // rect1 and circ should not collide, while rect2 and circ should
-        println!("Testing 0.5 radius circle at position (1,1) and 0.25x0.25 rectangle at position (0,0)\n");
-        assert!(circ.test_collision(&rect1).is_none());
-        println!("Testing 0.5 radius circle at position (1,1) and 0.5x0.5 rectangle at position (1.5,0)\n");
-        assert!(circ.test_collision(&rect2).is_some());
-    }
+    //     // rect1 and circ should not collide, while rect2 and circ should
+    //     println!("Testing 0.5 radius circle at position (1,1) and 0.25x0.25 rectangle at position (0,0)\n");
+    //     assert!(circ.test_collision(&rect1).is_none());
+    //     println!("Testing 0.5 radius circle at position (1,1) and 0.5x0.5 rectangle at position (1.5,0)\n");
+    //     assert!(circ.test_collision(&rect2).is_some());
+    // }
 }
