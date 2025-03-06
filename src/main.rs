@@ -37,6 +37,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     ) {
+    // Setup the Bevy resources
     commands.spawn(Camera2d);
 
     let mut ball = BallEntity::new(Vec2::new(0.0, 0.0),

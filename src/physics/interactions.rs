@@ -7,6 +7,9 @@ use super::constants::G;
 use crate::rendering::scene::Scene;
 
 pub fn test_collision(obj_1: &PhysicsEntity, obj_2: &PhysicsEntity) -> Option<Vec2> {
+    // Test the collision between two objects using Separating Axis Theorem
+    // If the objects are not colliding, return None
+    // If the objects are colliding, return the minimum translation vector
     let axes1 = obj_1.get_axes();
     let axes2 = obj_2.get_axes();
     let verts1 = obj_1.translated_verts();
@@ -50,6 +53,9 @@ pub fn kinetic_physics(
     time: Res<Time>,
     mut transforms: Query<&mut Transform>,
 ) {
+    // Process all kinetic physics including collisions, gravity, and drag
+    // Loops through all spawned objects by using the bevy Query command
+    // Updates the position and velocity resulting from the time step
     // Check for collisions
     for i in 0..game.entities.len() {
         let (left, right) = game.entities.split_at_mut(i + 1);
@@ -80,6 +86,8 @@ pub fn kinetic_physics(
 
 
 fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
+    // Calculate the graviational force between objects given their masses and positions
+    // Assumes point masses located at provided positions
     // F = G*m1*m2/d^2
     let d = distance(p1, p2);
     let f_tot = (G * m1 * m2) / (d * d);
@@ -95,11 +103,14 @@ fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
 
 
 fn distance(p1: &Vec2, p2: &Vec2) -> f32 {
+    // Calculate the distance between two 2D positions
     ((p1.x - p2.x).powf(2.0) + (p1.y - p2.y).powf(2.0)).powf(0.5)
 }
 
 
 fn project(verts: &Vec<Vec2>, axis: &Vec2) -> (f32, f32) {
+    // Project a set of vertices (2D positions) onto an axis
+    // and return the maximum and minimum projections
     let mut min = f32::INFINITY;
     let mut max = -f32::INFINITY;
     for vert in verts {

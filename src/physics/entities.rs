@@ -24,6 +24,8 @@ impl PhysicsData {
     }
 
     fn set_axes(&mut self) {
+        // Calculate and set the axes which are the normals to the edges of the 
+        // shape
         let verts = &self.vertices;
         for i in 0..verts.len() {
             let j = (i + 1) % verts.len();
@@ -102,6 +104,7 @@ impl PhysicsEntity {
 }
 
 impl BallEntity {
+    // Balls are initialized with a radius
     pub fn new(position: Vec2, velocity: Vec2, radius: f32) -> Self {
         let mut ball = BallEntity {
             physics: PhysicsData::new(position, velocity),
@@ -123,6 +126,7 @@ impl BallEntity {
 }
 
 impl RectangleEntity {
+    // Rectangles are initialized with a width and height
     pub fn new(position: Vec2, velocity: Vec2, width: f32, height: f32,) -> Self {
         let mut rect = RectangleEntity {
             physics: PhysicsData::new(position, velocity),
