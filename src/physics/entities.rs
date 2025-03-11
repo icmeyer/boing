@@ -1,6 +1,10 @@
 use bevy::math::Vec2;
-use bevy::prelude::{Entity, Color};
+use bevy::prelude::*;
+
 use super::constants::{TWOPI};
+
+use crate::rendering::scene::Scene;
+
 
 pub struct PhysicsData {
     pub position: Vec2,
@@ -9,6 +13,20 @@ pub struct PhysicsData {
     pub axes: Vec<Vec2>,
     pub stationary: bool,
     pub mass: f32,
+}
+
+pub struct KinematicData {
+    pub position: Vec2,
+    pub velocity: Vec2,
+    pub radius: f32,
+    pub mass: f32,
+}
+
+impl KinematicData {
+    pub fn new(position: Vec2, velocity: Vec2, radius: f32, 
+               mass: f32) -> Self {
+        Self { position, velocity, radius, mass }
+    }
 }
 
 impl PhysicsData {
@@ -115,6 +133,32 @@ impl BallEntity {
         ball.set_vertices(16);
         ball.physics.set_axes();
         ball
+    }
+
+    pub fn spawn(
+        commands: &mut Commands,
+        scene: &mut ResMut<Scene>,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<ColorMaterial>>,
+        kinematic_data: KinematicData,
+    ) {
+        let mut ball = BallEntity::new(
+            kinematic_data.position,
+            kinematic_data.velocity,
+            kinematic_data.radius
+        );
+
+        ball.bevy.entity = commands.spawn((
+            Mesh2d(meshes.add(Circle::new(ball.radius))),
+            MeshMaterial2d(materials.add(ball.bevy.color)),
+            Transform::from_xyz(
+                ball.physics.position.x,
+                ball.physics.position.y,
+                0.0
+            ),
+        )).id();
+
+        scene.entities.push(PhysicsEntity::Ball(ball));
     }
 
     fn set_vertices(&mut self, n: i64) { 
