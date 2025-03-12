@@ -91,7 +91,6 @@ impl PhysicsEntity {
 
     pub fn position(&self) -> Vec2 { self.physics().position }
     pub fn velocity(&self) -> Vec2 { self.physics().velocity }
-    pub fn set_position(&mut self, pos: Vec2) { self.physics_mut().position = pos; }
     pub fn set_velocity(&mut self, vel: Vec2) { self.physics_mut().velocity = vel; }
     pub fn mass(&self) -> f32 { self.physics().mass }
     pub fn is_stationary(&self) -> bool { self.physics().stationary }
@@ -191,8 +190,6 @@ impl RectangleEntity {
             height,
         );
 
-        let half_width = rect.width / 2.0;
-        let half_height = rect.height / 2.0;
         rect.bevy.entity = commands.spawn((
             Mesh2d(meshes.add(Rectangle::new(width, height))),
             MeshMaterial2d(materials.add(rect.bevy.color)),

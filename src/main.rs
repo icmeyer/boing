@@ -5,8 +5,7 @@ use bevy::prelude::*;
 use bevy::window::{WindowResolution, WindowPlugin};
 use bevy::math::Vec2;
 
-use physics::entities::{BallEntity, RectangleEntity, PhysicsEntity,
-                        KinematicData,};
+use physics::entities::{BallEntity, RectangleEntity, KinematicData,};
 use physics::constants::{SIDE_LENGTH,};
 use physics::interactions::kinetic_physics;
 use rendering::scene::{Scene, update_scene};
@@ -42,10 +41,10 @@ fn setup(
 
     // Main ball
     let kinematic_data = KinematicData {
-        position: Vec2::new(-SIDE_LENGTH/4.0, 0.0),
-        velocity: Vec2::new(100.0, 100.0),
+        position: Vec2::new(-SIDE_LENGTH/100.0, 0.0),
+        velocity: Vec2::new(10.0, 10.0),
         stationary: false,
-        mass: 100.0,
+        mass: 1.0,
     };
     BallEntity::spawn(
         &mut commands,
@@ -56,6 +55,51 @@ fn setup(
         SIDE_LENGTH/20.0,
     );
 
+    let kinematic_data = KinematicData {
+        position: Vec2::new(0.0, SIDE_LENGTH/10.0),
+        velocity: Vec2::new(10.0, 10.0),
+        stationary: false,
+        mass: 1.0,
+    };
+    BallEntity::spawn(
+        &mut commands,
+        &mut scene,
+        &mut meshes,
+        &mut materials,
+        kinematic_data,
+        SIDE_LENGTH/30.0,
+    );
+
+    let kinematic_data = KinematicData {
+        position: Vec2::new(SIDE_LENGTH/5.0, -SIDE_LENGTH/5.0),
+        velocity: Vec2::new(10.0, 10.0),
+        stationary: false,
+        mass: 1.0,
+    };
+    BallEntity::spawn(
+        &mut commands,
+        &mut scene,
+        &mut meshes,
+        &mut materials,
+        kinematic_data,
+        SIDE_LENGTH/10.0,
+    );
+
+    let kinematic_data = KinematicData {
+        position: Vec2::new(-SIDE_LENGTH/5.0, -SIDE_LENGTH/5.0),
+        velocity: Vec2::new(10.0, 10.0),
+        stationary: false,
+        mass: 1.0,
+    };
+    BallEntity::spawn(
+        &mut commands,
+        &mut scene,
+        &mut meshes,
+        &mut materials,
+        kinematic_data,
+        SIDE_LENGTH/25.0,
+    );
+
     let dist_const = 1.2;
     let gravity_positions = [
         Vec2::new(0.0, -dist_const * SIDE_LENGTH), 
@@ -64,12 +108,12 @@ fn setup(
         Vec2::new(-dist_const * SIDE_LENGTH, 0.0), 
     ];
 
-    for i in 0..gravity_positions.len() {
+    for pos in &gravity_positions {
         let kinematic_data = KinematicData {
-            position: gravity_positions[i],
+            position: *pos,
             velocity: Vec2::ZERO,
             stationary: true,
-            mass: 100.0,
+            mass: 200.0,
         };
         BallEntity::spawn(
             &mut commands,

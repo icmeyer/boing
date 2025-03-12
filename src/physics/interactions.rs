@@ -69,7 +69,8 @@ pub fn kinetic_physics(
             if let Some(min_transl_vec) = test_collision(current, other) {
                 let v = current.velocity();
                 let reflection = v - 2.0 * v.dot(min_transl_vec) * min_transl_vec;
-                current.set_velocity(reflection);
+                let bounce = 1.33;
+                current.set_velocity(bounce * reflection);
                 break; // currently only handle collision with one other body
             }
         }
@@ -93,6 +94,14 @@ pub fn kinetic_physics(
         current.set_velocity(current.velocity() + delta_v);
     }
 
+    // // Apply drag
+    for entity in game.entities.iter_mut() {
+        if entity.is_stationary() {continue; }
+        let v = entity.velocity();
+        let drag = 10.0 * (v.length() / 5e2).powf(2.0) * v.normalize();
+        entity.set_velocity(v - drag);
+    }
+
     // Advance velocity
     for i in 0..game.entities.len() {
         if let Ok(mut transform) = transforms.get_mut(game.entities[i].entity()) {
@@ -111,9 +120,8 @@ fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
     // F = G*m1*m2/d^2
     let d = distance(p1, p2);
     let f_tot = 1e16 * (G * m1 * m2) / (d * d);
-    println!("Force: {}", f_tot);
-    let f_vec = f_tot * (p2 - p1).normalize();
-    f_vec
+    // println!("Force: {}", f_tot);
+    f_tot * (p2 - p1).normalize()
 }
 
 
