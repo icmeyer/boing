@@ -18,14 +18,12 @@ pub struct PhysicsData {
 pub struct KinematicData {
     pub position: Vec2,
     pub velocity: Vec2,
-    pub radius: f32,
     pub mass: f32,
 }
 
 impl KinematicData {
-    pub fn new(position: Vec2, velocity: Vec2, radius: f32, 
-               mass: f32) -> Self {
-        Self { position, velocity, radius, mass }
+    pub fn new(position: Vec2, velocity: Vec2, mass: f32) -> Self {
+        Self { position, velocity, mass }
     }
 }
 
@@ -141,11 +139,12 @@ impl BallEntity {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<ColorMaterial>>,
         kinematic_data: KinematicData,
+        radius: f32,
     ) {
         let mut ball = BallEntity::new(
             kinematic_data.position,
             kinematic_data.velocity,
-            kinematic_data.radius
+            radius
         );
 
         ball.bevy.entity = commands.spawn((
@@ -181,6 +180,37 @@ impl RectangleEntity {
         rect.set_vertices();
         rect.physics.set_axes();
         rect
+    }
+
+    pub fn spawn(
+        commands: &mut Commands,
+        scene: &mut ResMut<Scene>,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<ColorMaterial>>,
+        kinematic_data: KinematicData,
+        width: f32,
+        height: f32,
+    ) {
+        let mut rect = RectangleEntity::new(
+            kinematic_data.position,
+            kinematic_data.velocity,
+            width,
+            height,
+        );
+
+        let half_width = rect.width / 2.0;
+        let half_height = rect.height / 2.0;
+        rect.bevy.entity = commands.spawn((
+            Mesh2d(meshes.add(Rectangle::new(width, height))),
+            MeshMaterial2d(materials.add(rect.bevy.color)),
+            Transform::from_xyz(
+                rect.physics.position.x,
+                rect.physics.position.y,
+                0.0,
+            ),
+        )).id();
+
+        scene.entities.push(PhysicsEntity::Rectangle(rect));
     }
 
     fn set_vertices(&mut self) {

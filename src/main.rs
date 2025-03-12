@@ -43,76 +43,76 @@ fn setup(
     let kinematic_data = KinematicData::new(
         Vec2::new(0.0, 0.0),
         Vec2::new(330.0, 200.0),
-        SIDE_LENGTH/10.0,
         10.0,
-    );
+        );
     BallEntity::spawn(
         &mut commands,
         &mut scene,
         &mut meshes,
         &mut materials,
         kinematic_data,
+        SIDE_LENGTH/10.0,
     );
 
-    let mut wall =  RectangleEntity::new(Vec2::new(SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0, 0.0),
-                        Vec2::ZERO,
-                        SIDE_LENGTH/10.0,
-                        SIDE_LENGTH,
-                        );
-    wall.bevy.entity = commands.spawn((
-        Mesh2d(meshes.add(Rectangle::new(wall.width, wall.height))),
-        MeshMaterial2d(materials.add(wall.bevy.color)),
-        Transform::from_xyz(wall.physics.position.x,
-                            wall.physics.position.y,
-                            0.0)
-        ),
-    ).id();
-    scene.entities.push(PhysicsEntity::Rectangle(wall));
+    let kinematic_data = KinematicData::new(
+        Vec2::new(SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0, 0.0),
+        Vec2::ZERO,
+        0.0,
+        );
+    RectangleEntity::spawn(
+        &mut commands,
+        &mut scene,
+        &mut meshes,
+        &mut materials,
+        kinematic_data,
+        SIDE_LENGTH/10.0,
+        SIDE_LENGTH,
+    );
 
-    let mut wall =  RectangleEntity::new(Vec2::new(-SIDE_LENGTH/2.0 + SIDE_LENGTH/20.0, 0.0),
-                        Vec2::ZERO,
-                        SIDE_LENGTH/10.0,
-                        SIDE_LENGTH,
-                        );
-    wall.bevy.entity = commands.spawn((
-        Mesh2d(meshes.add(Rectangle::new(wall.width, wall.height))),
-        MeshMaterial2d(materials.add(wall.bevy.color)),
-        Transform::from_xyz(wall.physics.position.x,
-                            wall.physics.position.y,
-                            0.0)
-        ),
-    ).id();
-    scene.entities.push(PhysicsEntity::Rectangle(wall));
+    let kinematic_data = KinematicData::new(
+        Vec2::new(-SIDE_LENGTH/2.0 + SIDE_LENGTH/20.0, 0.0),
+        Vec2::ZERO,
+        0.0,
+        );
+    RectangleEntity::spawn(
+        &mut commands,
+        &mut scene,
+        &mut meshes,
+        &mut materials,
+        kinematic_data,
+        SIDE_LENGTH/10.0,
+        SIDE_LENGTH,
+    );
 
-    let mut wall =  RectangleEntity::new(Vec2::new(0.0, SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0),
-                        Vec2::ZERO,
-                        SIDE_LENGTH,
-                        SIDE_LENGTH/10.0,
-                        );
-    wall.bevy.entity = commands.spawn((
-        Mesh2d(meshes.add(Rectangle::new(wall.width, wall.height))),
-        MeshMaterial2d(materials.add(wall.bevy.color)),
-        Transform::from_xyz(wall.physics.position.x,
-                            wall.physics.position.y,
-                            0.0)
-        ),
-    ).id();
-    scene.entities.push(PhysicsEntity::Rectangle(wall));
+    let kinematic_data = KinematicData::new(
+        Vec2::new(0.0, SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0),
+        Vec2::ZERO,
+        0.0,
+        );
+    RectangleEntity::spawn(
+        &mut commands,
+        &mut scene,
+        &mut meshes,
+        &mut materials,
+        kinematic_data,
+        SIDE_LENGTH,
+        SIDE_LENGTH/10.0,
+    );
 
-    let mut wall =  RectangleEntity::new(Vec2::new(0.0, -SIDE_LENGTH/2.0 + SIDE_LENGTH/20.0),
-                        Vec2::ZERO,
-                        SIDE_LENGTH,
-                        SIDE_LENGTH/10.0,
-                        );
-    wall.bevy.entity = commands.spawn((
-        Mesh2d(meshes.add(Rectangle::new(wall.width, wall.height))),
-        MeshMaterial2d(materials.add(wall.bevy.color)),
-        Transform::from_xyz(wall.physics.position.x,
-                            wall.physics.position.y,
-                            0.0)
-        ),
-    ).id();
-    scene.entities.push(PhysicsEntity::Rectangle(wall));
+    let kinematic_data = KinematicData::new(
+        Vec2::new(0.0, - SIDE_LENGTH/2.0 + SIDE_LENGTH/20.0),
+        Vec2::ZERO,
+        0.0,
+        );
+    RectangleEntity::spawn(
+        &mut commands,
+        &mut scene,
+        &mut meshes,
+        &mut materials,
+        kinematic_data,
+        SIDE_LENGTH,
+        SIDE_LENGTH/10.0,
+    );
 }
 
 
