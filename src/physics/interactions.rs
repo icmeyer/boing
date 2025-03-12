@@ -57,20 +57,38 @@ pub fn kinetic_physics(
     // Loops through all spawned objects by using the bevy Query command
     // Updates the position and velocity resulting from the time step
     // Check for collisions
-    for i in 0..game.entities.len() {
-        let (left, right) = game.entities.split_at_mut(i + 1);
-        let obj_1 = &mut left[i];
 
-        for obj_2 in right.iter() {
-            if let Some(min_transl_vec) = test_collision(obj_1, obj_2) {
-                if !obj_1.is_stationary() {
-                    let v = obj_1.velocity();
+    for i in 0..game.entities.len() {
+        let (head, tail) = game.entities.split_at_mut(i);
+        let (current, tail) = tail.split_first_mut().unwrap();
+        let other_entities = head.iter().chain(tail.iter());
+        
+        for other in other_entities {
+            if let Some(min_transl_vec) = test_collision(current, other) {
+                if !current.is_stationary() {
+                    let v = current.velocity();
                     let reflection = v - 2.0 * v.dot(min_transl_vec) * min_transl_vec;
-                    obj_1.set_velocity(reflection);
+                    current.set_velocity(reflection);
                 }
                 break;
             }
         }
+    }
+
+    
+    // Apply gravity
+    for i in 0..game.entities.len() {
+        let (head, tail) = game.entities.split_at_mut(i);
+        let (current, tail) = tail.split_first_mut().unwrap();
+        let other_entities = head.iter().chain(tail.iter());
+        
+        let mut total_force = Vec2::ZERO;
+        for other in other_entities {
+            total_force += grav_force(&current.mass(), &other.mass(),
+                                      &current.position(), &other.position());
+        }
+        let delta_v = total_force / current.mass() * time.delta_secs();
+        current.set_velocity(current.velocity() + delta_v);
     }
 
     // Advance velocity
@@ -86,19 +104,14 @@ pub fn kinetic_physics(
 
 
 fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
-    // Calculate the graviational force between objects given their masses and positions
+    // Calculate the gravitational force on object 1
     // Assumes point masses located at provided positions
     // F = G*m1*m2/d^2
     let d = distance(p1, p2);
-    let f_tot = (G * m1 * m2) / (d * d);
-    let dx = p1.x - p2.x;
-    let dy = p1.y - p2.y;
-    let xcomp = f_tot * (dy/dx).atan().cos();
-    let ycomp = f_tot * (dy/dx).atan().sin();
-    Vec2 {
-        x: xcomp,
-        y: ycomp,
-    }
+    let f_tot = 5e17 * (G * m1 * m2) / (d * d);
+    println!("Force: {}", f_tot);
+    let f_vec = f_tot * (p2 - p1).normalize();
+    f_vec
 }
 
 
@@ -120,3 +133,10 @@ fn project(verts: &Vec<Vec2>, axis: &Vec2) -> (f32, f32) {
     }
     (min, max)
 }
+
+// mod test {
+//     use super::*;
+// 
+//     #[test]
+//     fn gravity(){
+

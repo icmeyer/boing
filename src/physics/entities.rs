@@ -128,7 +128,7 @@ impl BallEntity {
             radius,
         };
 
-        ball.set_vertices(16);
+        ball.set_vertices(64);
         ball.physics.set_axes();
         ball
     }
