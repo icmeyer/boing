@@ -41,94 +41,84 @@ fn setup(
     commands.spawn(Camera2d);
 
     // Main ball
-    let kinematic_data = KinematicData::new(
-        Vec2::new(-SIDE_LENGTH/4.0, 0.0),
-        Vec2::new(0.0, 100.0),
-        1e9,
-        );
+    let kinematic_data = KinematicData {
+        position: Vec2::new(-SIDE_LENGTH/4.0, 0.0),
+        velocity: Vec2::new(100.0, 100.0),
+        stationary: false,
+        mass: 100.0,
+    };
     BallEntity::spawn(
         &mut commands,
         &mut scene,
         &mut meshes,
         &mut materials,
         kinematic_data,
-        SIDE_LENGTH/100.0,
+        SIDE_LENGTH/20.0,
     );
 
-    // Gravity ball
-    let kinematic_data = KinematicData::new(
-        Vec2::new(SIDE_LENGTH/4.0, 0.0),
-        Vec2::new(0.0, -100.0),
-        1e9,
+    let dist_const = 1.2;
+    let gravity_positions = [
+        Vec2::new(0.0, -dist_const * SIDE_LENGTH), 
+        Vec2::new(0.0, dist_const * SIDE_LENGTH), 
+        Vec2::new(dist_const * SIDE_LENGTH, 0.0), 
+        Vec2::new(-dist_const * SIDE_LENGTH, 0.0), 
+    ];
+
+    for i in 0..gravity_positions.len() {
+        let kinematic_data = KinematicData {
+            position: gravity_positions[i],
+            velocity: Vec2::ZERO,
+            stationary: true,
+            mass: 100.0,
+        };
+        BallEntity::spawn(
+            &mut commands,
+            &mut scene,
+            &mut meshes,
+            &mut materials,
+            kinematic_data,
+            SIDE_LENGTH/100.0,
         );
-    BallEntity::spawn(
-        &mut commands,
-        &mut scene,
-        &mut meshes,
-        &mut materials,
-        kinematic_data,
-        SIDE_LENGTH/100.0,
-    );
+    }
 
-    // let kinematic_data = KinematicData::new(
-    //     Vec2::new(SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0, 0.0),
-    //     Vec2::ZERO,
-    //     0.0,
-    //     );
-    // RectangleEntity::spawn(
-    //     &mut commands,
-    //     &mut scene,
-    //     &mut meshes,
-    //     &mut materials,
-    //     kinematic_data,
-    //     SIDE_LENGTH/10.0,
-    //     SIDE_LENGTH,
-    // );
+    let rectangle_positions = [
+        Vec2::new(SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0, 0.0),
+        Vec2::new(-SIDE_LENGTH/2.0 + SIDE_LENGTH/20.0, 0.0),
+        Vec2::new(0.0, -SIDE_LENGTH/2.0 + SIDE_LENGTH/20.0),
+        Vec2::new(0.0, SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0),
+    ];
 
-    // let kinematic_data = KinematicData::new(
-    //     Vec2::new(-SIDE_LENGTH/2.0 + SIDE_LENGTH/20.0, 0.0),
-    //     Vec2::ZERO,
-    //     0.0,
-    //     );
-    // RectangleEntity::spawn(
-    //     &mut commands,
-    //     &mut scene,
-    //     &mut meshes,
-    //     &mut materials,
-    //     kinematic_data,
-    //     SIDE_LENGTH/10.0,
-    //     SIDE_LENGTH,
-    // );
+    let rectangle_widths = [
+        SIDE_LENGTH/10.0,
+        SIDE_LENGTH/10.0,
+        SIDE_LENGTH,
+        SIDE_LENGTH,
+    ];
 
-    // let kinematic_data = KinematicData::new(
-    //     Vec2::new(0.0, SIDE_LENGTH/2.0 - SIDE_LENGTH/20.0),
-    //     Vec2::ZERO,
-    //     0.0,
-    //     );
-    // RectangleEntity::spawn(
-    //     &mut commands,
-    //     &mut scene,
-    //     &mut meshes,
-    //     &mut materials,
-    //     kinematic_data,
-    //     SIDE_LENGTH,
-    //     SIDE_LENGTH/10.0,
-    // );
+    let rectangle_heights = [
+        SIDE_LENGTH,
+        SIDE_LENGTH,
+        SIDE_LENGTH/10.0,
+        SIDE_LENGTH/10.0,
+    ];
 
-    // let kinematic_data = KinematicData::new(
-    //     Vec2::new(0.0, - SIDE_LENGTH/2.0 + SIDE_LENGTH/20.0),
-    //     Vec2::ZERO,
-    //     0.0,
-    //     );
-    // RectangleEntity::spawn(
-    //     &mut commands,
-    //     &mut scene,
-    //     &mut meshes,
-    //     &mut materials,
-    //     kinematic_data,
-    //     SIDE_LENGTH,
-    //     SIDE_LENGTH/10.0,
-    // );
+    for i in 0..4 {
+        let kinematic_data = KinematicData {
+            position: rectangle_positions[i],
+            velocity: Vec2::ZERO,
+            stationary: true,
+            mass: 0.0,
+        };
+        RectangleEntity::spawn(
+            &mut commands,
+            &mut scene,
+            &mut meshes,
+            &mut materials,
+            kinematic_data,
+            rectangle_widths[i],
+            rectangle_heights[i],
+        );
+    }
 }
 
 

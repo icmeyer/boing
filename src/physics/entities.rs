@@ -18,24 +18,19 @@ pub struct PhysicsData {
 pub struct KinematicData {
     pub position: Vec2,
     pub velocity: Vec2,
+    pub stationary: bool,
     pub mass: f32,
 }
 
-impl KinematicData {
-    pub fn new(position: Vec2, velocity: Vec2, mass: f32) -> Self {
-        Self { position, velocity, mass }
-    }
-}
-
 impl PhysicsData {
-    fn new(position: Vec2, velocity: Vec2) -> Self {
+    fn new(kinematics: KinematicData) -> Self {
         PhysicsData {
-            position,
-            velocity,
+            position: kinematics.position,
+            velocity: kinematics.velocity,
+            stationary: kinematics.stationary,
+            mass: kinematics.mass,
             vertices: Vec::new(),
             axes: Vec::new(),
-            stationary: false,
-            mass: 1.0,
         }
     }
 
@@ -121,9 +116,9 @@ impl PhysicsEntity {
 
 impl BallEntity {
     // Balls are initialized with a radius
-    pub fn new(position: Vec2, velocity: Vec2, radius: f32) -> Self {
+    pub fn new(kinematics: KinematicData, radius: f32) -> Self {
         let mut ball = BallEntity {
-            physics: PhysicsData::new(position, velocity),
+            physics: PhysicsData::new(kinematics),
             bevy: BevyData::new(),
             radius,
         };
@@ -142,8 +137,7 @@ impl BallEntity {
         radius: f32,
     ) {
         let mut ball = BallEntity::new(
-            kinematic_data.position,
-            kinematic_data.velocity,
+            kinematic_data,
             radius
         );
 
@@ -170,9 +164,9 @@ impl BallEntity {
 
 impl RectangleEntity {
     // Rectangles are initialized with a width and height
-    pub fn new(position: Vec2, velocity: Vec2, width: f32, height: f32,) -> Self {
+    pub fn new(kinematics: KinematicData, width: f32, height: f32,) -> Self {
         let mut rect = RectangleEntity {
-            physics: PhysicsData::new(position, velocity),
+            physics: PhysicsData::new(kinematics),
             bevy: BevyData::new(),
             width,
             height,
@@ -192,8 +186,7 @@ impl RectangleEntity {
         height: f32,
     ) {
         let mut rect = RectangleEntity::new(
-            kinematic_data.position,
-            kinematic_data.velocity,
+            kinematic_data,
             width,
             height,
         );

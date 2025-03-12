@@ -61,25 +61,27 @@ pub fn kinetic_physics(
     for i in 0..game.entities.len() {
         let (head, tail) = game.entities.split_at_mut(i);
         let (current, tail) = tail.split_first_mut().unwrap();
+        if current.is_stationary() { continue; }
+
         let other_entities = head.iter().chain(tail.iter());
         
         for other in other_entities {
             if let Some(min_transl_vec) = test_collision(current, other) {
-                if !current.is_stationary() {
-                    let v = current.velocity();
-                    let reflection = v - 2.0 * v.dot(min_transl_vec) * min_transl_vec;
-                    current.set_velocity(reflection);
-                }
-                break;
+                let v = current.velocity();
+                let reflection = v - 2.0 * v.dot(min_transl_vec) * min_transl_vec;
+                current.set_velocity(reflection);
+                break; // currently only handle collision with one other body
             }
         }
     }
 
-    
     // Apply gravity
     for i in 0..game.entities.len() {
         let (head, tail) = game.entities.split_at_mut(i);
         let (current, tail) = tail.split_first_mut().unwrap();
+
+        if current.is_stationary() {continue; }
+
         let other_entities = head.iter().chain(tail.iter());
         
         let mut total_force = Vec2::ZERO;
@@ -108,7 +110,7 @@ fn grav_force(m1: &f32, m2: &f32, p1: &Vec2, p2: &Vec2) -> Vec2 {
     // Assumes point masses located at provided positions
     // F = G*m1*m2/d^2
     let d = distance(p1, p2);
-    let f_tot = 5e17 * (G * m1 * m2) / (d * d);
+    let f_tot = 1e16 * (G * m1 * m2) / (d * d);
     println!("Force: {}", f_tot);
     let f_vec = f_tot * (p2 - p1).normalize();
     f_vec
